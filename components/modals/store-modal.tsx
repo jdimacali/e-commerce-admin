@@ -44,7 +44,9 @@ export const StoreModal = () => {
       const response = await axios.post("/api/stores", values);
 
       console.log(response.data);
-      toast.success(`Store ${response.data.name} created!`);
+      // this will redirect the user to the page of the new store using the store id but instead of using redirect from next/navigation we use window to make sure a full reload happens and the
+      //  database is ready and synced up
+      window.location.assign(`/${response.data.id}`);
     } catch (error) {
       console.log(error);
       toast.error("Something went wrong");
