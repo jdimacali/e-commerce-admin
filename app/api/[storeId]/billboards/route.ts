@@ -24,7 +24,7 @@ export async function POST(
       return new NextResponse("ImageUrl is required", { status: 400 });
 
     if (!params.storeId)
-      return new NextResponse("tore Id is required", { status: 400 });
+      return new NextResponse("store Id is required", { status: 400 });
 
     const storeByUserId = prismadb.store.findFirst({
       where: {
