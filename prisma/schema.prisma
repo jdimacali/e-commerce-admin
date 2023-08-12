@@ -20,6 +20,7 @@ model Store {
   name            String
   userId          String
   billboards      Billboard[] @relation("StoreToBillboard")
+  categories      Category[] @relation("StoreToCategory")
   // this data defines a created at and updated at and uses the DateTime data types, it will also be given the attributes 
   // default(now()) to get the current moment it was created at and updatedAt attribute which updates the value with the current timestamp when  the table is updated
   createdAt       DateTime @default(now())
@@ -33,8 +34,23 @@ model Billboard {
   store       Store @relation("StoreToBillboard", fields: [storeId], references: [id])
   label       String 
   imageUrl    String 
+  categories Category[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
   @@index([storeId])
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  storeId     String 
+  store       Store    @relation("StoreToCategory", fields: [storeId], references: [id])
+  billboardId String
+  billboard   Billboard  @relation( fields: [billboardId], references: [id])
+  name        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([storeId])
+  @@index([billboardId])
 }
