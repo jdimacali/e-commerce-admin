@@ -34,36 +34,37 @@ export async function DELETE(
   req: Request,
   { params }: { params: { billboardId: string; storeId: string } }
 ) {
-  // use a try catch block to catch errors and make the code block run more smoothly
   try {
     const { userId } = auth();
-    if (!userId) return new NextResponse("Unauthenticated", { status: 401 });
 
-    if (!params.billboardId)
-      return new NextResponse("Billboard Id is required", { status: 400 });
+    if (!userId) {
+      return new NextResponse("Unauthenticated", { status: 403 });
+    }
+
+    if (!params.billboardId) {
+      return new NextResponse("Billboard id is required", { status: 400 });
+    }
 
     const storeByUserId = await prismadb.store.findFirst({
       where: {
-        id: params.billboardId,
+        id: params.storeId,
         userId,
       },
     });
 
-    if (!storeByUserId)
-      return new NextResponse("Unauthorized", { status: 403 });
+    if (!storeByUserId) {
+      return new NextResponse("Unauthorized", { status: 405 });
+    }
 
-    const billboard = await prismadb.billboard.deleteMany({
+    const billboard = await prismadb.billboard.delete({
       where: {
         id: params.billboardId,
       },
     });
 
-    // this will return a response of a json object with the store values when this request method is used
     return NextResponse.json(billboard);
   } catch (error) {
-    // catches the error and shows where its coming from and shows the error
-    console.log({ BILLBOARD_DELETE: error });
-    // then returns a response using the NextResponse class with a status 500 and a message Internal error
+    console.log("[BILLBOARD_DELETE]", error);
     return new NextResponse("Internal error", { status: 500 });
   }
 }
