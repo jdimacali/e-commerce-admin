@@ -30,6 +30,44 @@ export async function GET(
   }
 }
 
+export async function DELETE(
+  req: Request,
+  { params }: { params: { billboardId: string; storeId: string } }
+) {
+  // use a try catch block to catch errors and make the code block run more smoothly
+  try {
+    const { userId } = auth();
+    if (!userId) return new NextResponse("Unauthenticated", { status: 401 });
+
+    if (!params.billboardId)
+      return new NextResponse("Billboard Id is required", { status: 400 });
+
+    const storeByUserId = await prismadb.store.findFirst({
+      where: {
+        id: params.billboardId,
+        userId,
+      },
+    });
+
+    if (!storeByUserId)
+      return new NextResponse("Unauthorized", { status: 403 });
+
+    const billboard = await prismadb.billboard.deleteMany({
+      where: {
+        id: params.billboardId,
+      },
+    });
+
+    // this will return a response of a json object with the store values when this request method is used
+    return NextResponse.json(billboard);
+  } catch (error) {
+    // catches the error and shows where its coming from and shows the error
+    console.log({ BILLBOARD_DELETE: error });
+    // then returns a response using the NextResponse class with a status 500 and a message Internal error
+    return new NextResponse("Internal error", { status: 500 });
+  }
+}
+
 export async function PATCH(
   req: Request,
   { params }: { params: { billboardId: string; storeId: string } }
@@ -42,17 +80,23 @@ export async function PATCH(
     const { label, imageUrl } = body;
 
     // Error handling to check if the user in authorized and if the field name which is specifed in the name model in prisma is present if not then return a response error
-    if (!userId) return new NextResponse("Unauthenicated", { status: 400 });
-    if (!label) return new NextResponse("Label is required", { status: 400 });
-    if (!imageUrl)
+    if (!userId) {
+      return new NextResponse("Unauthenicated", { status: 400 });
+    }
+    if (!label) {
+      return new NextResponse("Label is required", { status: 400 });
+    }
+    if (!imageUrl) {
       return new NextResponse("ImageUrl is required", { status: 400 });
+    }
 
-    if (!params.billboardId)
-      return new NextResponse("Billboard Id is required", { status: 400 });
+    if (!params.billboardId) {
+      return new NextResponse("Billboard id is required", { status: 400 });
+    }
 
-    const storeByUserId = prismadb.store.findFirst({
+    const storeByUserId = await prismadb.store.findFirst({
       where: {
-        id: params.billboardId,
+        id: params.storeId,
         userId,
       },
     });
@@ -74,44 +118,6 @@ export async function PATCH(
   } catch (error) {
     // catches the error and shows where its coming from and shows the error
     console.log({ BILLBOARDS_PATCH: error });
-    // then returns a response using the NextResponse class with a status 500 and a message Internal error
-    return new NextResponse("Internal error", { status: 500 });
-  }
-}
-
-export async function DELETE(
-  req: Request,
-  { params }: { params: { billboardId: string; storeId: string } }
-) {
-  // use a try catch block to catch errors and make the code block run more smoothly
-  try {
-    const { userId } = auth();
-    if (!userId) return new NextResponse("Unauthenticated", { status: 401 });
-
-    if (!params.billboardId)
-      return new NextResponse("Billboard Id is required", { status: 400 });
-
-    const storeByUserId = prismadb.store.findFirst({
-      where: {
-        id: params.billboardId,
-        userId,
-      },
-    });
-
-    if (!storeByUserId)
-      return new NextResponse("Unauthorized", { status: 403 });
-
-    const billboard = await prismadb.billboard.deleteMany({
-      where: {
-        id: params.billboardId,
-      },
-    });
-
-    // this will return a response of a json object with the store values when this request method is used
-    return NextResponse.json(billboard);
-  } catch (error) {
-    // catches the error and shows where its coming from and shows the error
-    console.log({ BILLBOARD_DELETE: error });
     // then returns a response using the NextResponse class with a status 500 and a message Internal error
     return new NextResponse("Internal error", { status: 500 });
   }
