@@ -18,6 +18,9 @@ export async function GET(
       where: {
         id: params.categoryId,
       },
+      include: {
+        billboard: true,
+      },
     });
 
     // this will return a response of a json object with the store values when this request method is used

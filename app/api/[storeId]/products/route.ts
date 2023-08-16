@@ -1,66 +1,80 @@
-// auth is used to handle authentication
-import prismadb from "@/lib/prismadb";
-import { auth } from "@clerk/nextjs";
-// NextResponse is used to create http responses
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs";
 
-// api route for stores using the method post, this allows them to create a new store
-// it is exported as an async function and takes a req with a type Request
+import prismadb from "@/lib/prismadb";
+
 export async function POST(
   req: Request,
   { params }: { params: { storeId: string } }
 ) {
-  // use a try catch block to catch errors and make the code block run more smoothly
   try {
-    // grab the userId from the clerk auth
     const { userId } = auth();
+
     const body = await req.json();
+
     const {
       name,
       price,
       categoryId,
       colorId,
       sizeId,
+      images,
       isFeatured,
       isArchived,
-      images,
     } = body;
 
-    // Error handling to check if the user in authorized and if the field name which is specifed in the name model in prisma is present if not then return a response error
-    if (!userId) return new NextResponse("Unauthenicated", { status: 400 });
-    if (!name) return new NextResponse("Name is required", { status: 400 });
-    if (!price) return new NextResponse("price is required", { status: 400 });
-    if (!categoryId)
-      return new NextResponse("categoryId is required", { status: 400 });
-    if (!colorId)
-      return new NextResponse("colorId is required", { status: 400 });
-    if (!sizeId) return new NextResponse("sizeId is required", { status: 400 });
-    if (!images || !images.length)
-      return new NextResponse("images is required", { status: 400 });
+    if (!userId) {
+      return new NextResponse("Unauthenticated", { status: 403 });
+    }
 
-    if (!params.storeId)
-      return new NextResponse("store Id is required", { status: 400 });
+    if (!name) {
+      return new NextResponse("Name is required", { status: 400 });
+    }
 
-    const storeByUserId = prismadb.store.findFirst({
+    if (!images || !images.length) {
+      return new NextResponse("Images are required", { status: 400 });
+    }
+
+    if (!price) {
+      return new NextResponse("Price is required", { status: 400 });
+    }
+
+    if (!categoryId) {
+      return new NextResponse("Category id is required", { status: 400 });
+    }
+
+    if (!colorId) {
+      return new NextResponse("Color id is required", { status: 400 });
+    }
+
+    if (!sizeId) {
+      return new NextResponse("Size id is required", { status: 400 });
+    }
+
+    if (!params.storeId) {
+      return new NextResponse("Store id is required", { status: 400 });
+    }
+
+    const storeByUserId = await prismadb.store.findFirst({
       where: {
         id: params.storeId,
         userId,
       },
     });
 
-    if (!storeByUserId)
-      return new NextResponse("Unauthorized", { status: 403 });
-    // after all the data is destructured and the error handling passses create the store by assinging it to a variable and await a prismadb.store.create
-    // it takes an object in the create method with parameters like data, data lets you pass in data you will use in the specfic method
+    if (!storeByUserId) {
+      return new NextResponse("Unauthorized", { status: 405 });
+    }
+
     const product = await prismadb.product.create({
       data: {
         name,
         price,
+        isFeatured,
+        isArchived,
         categoryId,
         colorId,
         sizeId,
-        isFeatured,
-        isArchived,
         storeId: params.storeId,
         images: {
           createMany: {
@@ -70,23 +84,17 @@ export async function POST(
       },
     });
 
-    // this will return a response of a json object with the store values when this request method is used
     return NextResponse.json(product);
   } catch (error) {
-    // catches the error and shows where its coming from and shows the error
-    console.log({ PRODUCT_POST: error });
-    // then returns a response using the NextResponse class with a status 500 and a message Internal error
+    console.log("[PRODUCTS_POST]", error);
     return new NextResponse("Internal error", { status: 500 });
   }
 }
 
-// api route for stores using the method GET, this allows them to create a new store
-// it is exported as an async function and takes a req with a type Request
 export async function GET(
   req: Request,
   { params }: { params: { storeId: string } }
 ) {
-  // use a try catch block to catch errors and make the code block run more smoothly
   try {
     const { searchParams } = new URL(req.url);
     const categoryId = searchParams.get("categoryId") || undefined;
@@ -94,8 +102,9 @@ export async function GET(
     const sizeId = searchParams.get("sizeId") || undefined;
     const isFeatured = searchParams.get("isFeatured");
 
-    if (!params.storeId)
-      return new NextResponse("tore Id is required", { status: 400 });
+    if (!params.storeId) {
+      return new NextResponse("Store id is required", { status: 400 });
+    }
 
     const products = await prismadb.product.findMany({
       where: {
@@ -117,12 +126,9 @@ export async function GET(
       },
     });
 
-    // this will return a response of a json object with the store values when this request method is used
     return NextResponse.json(products);
   } catch (error) {
-    // catches the error and shows where its coming from and shows the error
-    console.log({ PRODUCTS_GET: error });
-    // then returns a response using the NextResponse class with a status 500 and a message Internal error
+    console.log("[PRODUCTS_GET]", error);
     return new NextResponse("Internal error", { status: 500 });
   }
 }
