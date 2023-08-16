@@ -8,7 +8,6 @@ export async function GET(
   req: Request,
   { params }: { params: { categoryId: string } }
 ) {
-  // use a try catch block to catch errors and make the code block run more smoothly
   try {
     if (!params.categoryId) {
       return new NextResponse("Category id is required", { status: 400 });
@@ -23,12 +22,9 @@ export async function GET(
       },
     });
 
-    // this will return a response of a json object with the store values when this request method is used
     return NextResponse.json(category);
   } catch (error) {
-    // catches the error and shows where its coming from and shows the error
-    console.log({ CATEGORYID_GET: error });
-    // then returns a response using the NextResponse class with a status 500 and a message Internal error
+    console.log("[CATEGORY_GET]", error);
     return new NextResponse("Internal error", { status: 500 });
   }
 }
